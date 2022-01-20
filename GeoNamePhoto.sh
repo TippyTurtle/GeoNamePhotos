@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Should rename (move) all jpgs, recursively, to something similar to ~/Pictures/2017-01/United States/2017-01-03 13h27m29s(Bellevue)(D6603).jpg
+# Sefore running, I highly recommend running rdfind to remove duplicats. by default it won't remove 
+
+# This script should rename (move) all jpgs, recursively, to something similar to ~/Pictures/2017-01/United States/2017-01-03 13h27m29s(Bellevue)(D6603).jpg
 
 # You need to have the following installed:
 # exiftool
