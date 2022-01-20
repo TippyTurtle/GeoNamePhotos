@@ -10,6 +10,7 @@
 
 # OutDir="/nfs/Public/FinishedPictures/"
 OutDir=~/Pictures/
+email=YourEmail@Domain.ReplaceMe
 
 IFS=$'\n'
 for i in $(find . -type f -iname "*.jpg") ; do
@@ -43,7 +44,7 @@ for i in $(find . -type f -iname "*.jpg") ; do
       echo "No Location 2"
     else
       echo GOOD Lat/Lon
-      MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=tduffin@gmail.com&accept-language=en-us&lat=$lat&lon=$lon&zoom=18&addressdetails=1")
+      MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-us&lat=$lat&lon=$lon&zoom=18&addressdetails=1")
 
       city=$(echo $MapLoc | jq '.address.city' | tr -d '"')
       echo "city " . "$city"
