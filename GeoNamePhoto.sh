@@ -65,6 +65,10 @@ for i in $(find . -type f -iname "*.jpg") ; do
           echo "hamlet" . "$city"
       fi
       if [ "$city" = 'null' ]; then
+          city=$(echo $MapLoc | jq '.address.tourism' | tr -d '"')
+          echo "tourism" . "$city"
+      fi
+      if [ "$city" = 'null' ]; then
           city=$(echo $MapLoc | jq '.address.historic' | tr -d '"')
           echo "historic" . "$city"
       fi
@@ -87,15 +91,17 @@ for i in $(find . -type f -iname "*.jpg") ; do
       if [ "$city" = "null" ]; then
           city=$(echo $MapLoc | jq '.address.county' | tr -d '"')
           echo "county" . "$city"
+          echo $MapLoc >> GeoNameCityError.txt
       fi
       if [ "$city" = "null" ]; then
           city=$(echo $MapLoc | jq '.address.state' | tr -d '"')
           echo "state" . "$city"
+          echo $MapLoc >> GeoNameCityError.txt
       fi
       if [ "$city" = "null" ]; then
           city="Unknown"
           echo "MISSING city ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ " . $MapLoc
-          echo $MapLoc > GeoNameCityError.txt
+          echo $MapLoc >> GeoNameCityError.txt
       fi
 
       country=$(echo $MapLoc | jq '.address.country' | tr -d '"')
