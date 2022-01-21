@@ -164,7 +164,14 @@ for i in $(find . -type f -iname "*.jpg") ; do
           fi
       fi
 
+      # Last ditch effort to have some type of location in the filename.
+      if [ "$city" = 'null' ]; then
+          city=$(echo $MapLoc | jq '.address.country' | tr -d '"')
+          echo "country" . "$city"
+      fi
 
+
+      # Very odd, it has geotags, but openstreetmap couldn't give me a name.
       if [ "$city" = 'null' ]; then
           echo "MISSING city ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ \n$city\n $MapLoc"
           city="Unknown"
@@ -190,5 +197,3 @@ find . -type d -empty -delete
 find . -type d -empty -delete
 find . -type d -empty -delete
 find . -type d -empty -delete
-
-
