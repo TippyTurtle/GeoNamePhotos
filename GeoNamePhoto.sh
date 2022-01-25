@@ -160,6 +160,8 @@ for i in $(find . -type f \( -iname "*.mpg" -o -iname "*.mpeg" -o -iname "*.mov"
         exiftool -fixBase -v0 -P '-FileName<'"$OutDir"'${FileModifyDate}('"$city"').%le' '-FileName<'"$OutDir"'${CreateDate}('"$city"').%le' '-FileName<'"$OutDir"'${DateTimeOriginal}('"$city"').%le' -d '%Y-%m/'"$country"'/%Y-%m-%d %Hh%Mm%Ss%%-c' "$i"
         echo No Camera Model 2
       fi
+
+      # Do not remove this. It would be evil to OpenStreetMaps and against their terms of use.  Consider making it much longer and running overnight.
       echo Sleeping 2 seconds...
       sleep 2
     fi
