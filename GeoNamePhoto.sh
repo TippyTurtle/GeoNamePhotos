@@ -19,20 +19,21 @@ OutDir=~/Pictures/
 email=YourEmail@Domain.ReplaceMe
 
 IFS=$'\n'
-for i in $(find . -type f -iname "*.jpg") ; do
+for i in $(find . -type f \( -iname "*.mpg" -o -iname "*.mpeg" -o -iname "*.mov" -o -iname "*.mp4" -o -iname "*.wmv" -o -iname "*.avi" -o -iname "*.3gp" \)) ; do
+# for i in $(find . -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.cr2" \)) ; do
   echo "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"."$i"."XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
   lat=$(exiftool -gpslatitude -n "$i" | tr -d 'GPS Latitude : ')
   lon=$(exiftool -gpslongitude -n "$i" | tr -d 'GPS Longitude : ')
+  
   exiftool -n -DateTimeOriginal "$i"
-  echo Lat:"$lat"
-  echo Lon:"$lon"
+  echo Location:"lat=$lat&lon=$lon"
 
   if [ "$lat" = "0.00000" ] ; then
     echo Zero Latitude
     exiftool -fixBase -v0 -P '-FileName<'"$OutDir"'${FileModifyDate}(${Model;}).%le' -d '%Y-%m//%Y-%m-%d %Hh%Mm%Ss%%-c' '-FileName<'"$OutDir"'${CreateDate}(${Model;}).%le' '-FileName<'"$OutDir"'${DateTimeOriginal}(${Model;}).%le' "$i"
     if [ -e "$i" ]  ; then
       exiftool -fixBase -v0 -P '-FileName<#${FileModifyDate}.%le' -d '%Y-%m//%Y-%m-%d %Hh%Mm%Ss%%-c' '-FileName<'"$OutDir"'${CreateDate}.%le' '-FileName<'"$OutDir"'${DateTimeOriginal}.%le' "$i"
-      echo No Camera Model
+      echo No Camera Model 
     fi
     echo "No Location 1"
 
@@ -51,8 +52,8 @@ for i in $(find . -type f -iname "*.jpg") ; do
       echo "No Location 2"
     else
       echo GOOD Lat/Lon
-      MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-us&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
-      echo "$MapLoc"
+      MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-US,en;q=0.5&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
+#      echo "$MapLoc"
 
       city=$(echo $MapLoc | jq '.address.city' | tr -d '"')
       echo "city" . "$city"
@@ -89,79 +90,51 @@ for i in $(find . -type f -iname "*.jpg") ; do
           city=$(echo $MapLoc | jq '.address.state' | tr -d '"')
           echo "state" . "$city"
       fi
+      Landmark='null'
 
-      # Fields more specific than City...but you sort of need city still to be clear
+      # Find nearest Landmark. It gets overwritten with more and more specific place names, if they exist.
+      if [ $(echo $MapLoc | jq '.address.road' | tr -d '\"') != 'null' ]; then
+          Landmark="$(echo $MapLoc | jq '.address.road' | tr -d '\"')"
+          echo road . "$Landmark"
+      fi
       if [ $(echo $MapLoc | jq '.address.neighbourhood' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.neighbourhood' | tr -d '\"')"
-              echo neighbourhood . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.neighbourhood' | tr -d '\"')-$city"
-              echo neighbourhood . "$city"
-          fi
-      fi
-      if [ $(echo $MapLoc | jq '.address.man_made' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.man_made' | tr -d '\"')"
-              echo man_made . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.man_made' | tr -d '\"')-$city"
-              echo man_made . "$city"
-          fi
-      fi
-      if [ $(echo $MapLoc | jq '.address.amenity' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.amenity' | tr -d '\"')"
-              echo amenity . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.amenity' | tr -d '\"')-$city"
-              echo amenity . "$city"
-          fi
+          Landmark="$(echo $MapLoc | jq '.address.neighbourhood' | tr -d '\"')"
+          echo neighbourhood . "$Landmark"
       fi
       if [ $(echo $MapLoc | jq '.address.place' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.place' | tr -d '\"')"
-              echo place . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.place' | tr -d '\"')-$city"
-              echo place . "$city"
-          fi
+          Landmark="$(echo $MapLoc | jq '.address.place' | tr -d '\"')"
+          echo place . "$Landmark"
       fi
       if [ $(echo $MapLoc | jq '.address.building' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.building' | tr -d '\"')"
-              echo building . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.building' | tr -d '\"')-$city"
-              echo building . "$city"
-          fi
-      fi
-      if [ $(echo $MapLoc | jq '.address.tourism' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.tourism' | tr -d '\"')"
-              echo tourism . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.tourism' | tr -d '\"')-$city"
-              echo tourism . "$city"
-          fi
-      fi
-      if [ $(echo $MapLoc | jq '.address.historic' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.historic' | tr -d '\"')"
-              echo historic . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.historic' | tr -d '\"')-$city"
-              echo historic . "$city"
-          fi
+          Landmark="$(echo $MapLoc | jq '.address.building' | tr -d '\"')"
+          echo building . "$Landmark"
       fi
       if [ $(echo $MapLoc | jq '.address.office' | tr -d '\"') != 'null' ]; then
-          if [ "$city" = 'null' ]; then
-              city="$(echo $MapLoc | jq '.address.office' | tr -d '\"')"
-              echo office . "$city"
-          else
-              city="$(echo $MapLoc | jq '.address.office' | tr -d '\"')-$city"
-              echo office . "$city"
-          fi
+          Landmark="$(echo $MapLoc | jq '.address.office' | tr -d '\"')"
+          echo office . "$Landmark"
+      fi
+      if [ $(echo $MapLoc | jq '.address.man_made' | tr -d '\"') != 'null' ]; then
+          Landmark="$(echo $MapLoc | jq '.address.man_made' | tr -d '\"')"
+          echo man_made . "$Landmark"
+      fi
+      if [ $(echo $MapLoc | jq '.address.amenity' | tr -d '\"') != 'null' ]; then
+          Landmark="$(echo $MapLoc | jq '.address.amenity' | tr -d '\"')"
+          echo amenity . "$Landmark"
+      fi
+      if [ $(echo $MapLoc | jq '.address.historic' | tr -d '\"') != 'null' ]; then
+          Landmark="$(echo $MapLoc | jq '.address.historic' | tr -d '\"')"
+          echo historic . "$Landmark"
+      fi
+      if [ $(echo $MapLoc | jq '.address.tourism' | tr -d '\"') != 'null' ]; then
+          Landmark="$(echo $MapLoc | jq '.address.tourism' | tr -d '\"')"
+          echo tourism . "$Landmark"
+      fi
+
+      # Add the nearist landmark to the city name
+      if [ "$city" = 'null' ]; then
+          city="$Landmark"
+      else
+          city="$Landmark-$city"
       fi
 
       # Last ditch effort to have some type of location in the filename.
@@ -179,12 +152,12 @@ for i in $(find . -type f -iname "*.jpg") ; do
       fi
 
       country=$(echo $MapLoc | jq '.address.country' | tr -d '"')
-      echo "$city"
-      echo "$country"
+      echo 
+      echo "City is $city in the country $country"
 
       exiftool -fixBase -v0 -P '-FileName<'"$OutDir"'${FileModifyDate}('"$city"')(${Model;}).%le' '-FileName<'"$OutDir"'${CreateDate}('"$city"')(${Model;}).%le' '-FileName<'"$OutDir"'${DateTimeOriginal}('"$city"')(${Model;}).%le' -d '%Y-%m/'"$country"'/%Y-%m-%d %Hh%Mm%Ss%%-c' "$i"
       if [ -e "$i" ] ; then
-        exiftool -fixBase -v0 -P '-FileName<'"$OutDir"'${FileModifyDate}('"$city"')(${Model;}).%le' '-FileName<'"$OutDir"'${CreateDate}('"$city"')(${Model;}).%le' '-FileName<'"$OutDir"'${DateTimeOriginal}('"$city"')(${Model;}).%le' -d '%Y-%m/'"$country"'/%Y-%m-%d %Hh%Mm%Ss%%-c' "$i"
+        exiftool -fixBase -v0 -P '-FileName<'"$OutDir"'${FileModifyDate}('"$city"').%le' '-FileName<'"$OutDir"'${CreateDate}('"$city"').%le' '-FileName<'"$OutDir"'${DateTimeOriginal}('"$city"').%le' -d '%Y-%m/'"$country"'/%Y-%m-%d %Hh%Mm%Ss%%-c' "$i"
         echo No Camera Model 2
       fi
       echo Sleeping 2 seconds...
