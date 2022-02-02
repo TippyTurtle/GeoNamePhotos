@@ -1,10 +1,11 @@
 # GeoNamePhotos
   
-  First ham handed attempt to post this. Nasty bunch of hard-coded paths and no error checking. Gulp.
-  
-  This bash script should run through all the subdirectories from where you run it looking for jpg files and renameing (moving) them to something similar to:
-
+  This script should rename (move) all images or vidoe files, recursively, to rename them something similar to:
   ~/Pictures/2017-01/United States/2017-01-03 13h27m29s(Bellevue)(D6603).jpg
+
+  Before running, I highly recommend running rdfind to remove duplicats. By default it won't remove duplicates, you need rdfind -deleteduplicates true 
+  rdfind prioritizes the order the the paths you include, deleting the lowest priority, like rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .
+  rdfind looks for duplicates across all file types...not just jpg.
   
   **This is:**
   ~/Pictures/
@@ -16,7 +17,6 @@
   
   **You need to have the following installed:**
   - exiftool
-  - coreutils (for tr)
   - curl
   - jq
   
