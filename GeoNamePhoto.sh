@@ -13,8 +13,8 @@
 # curl
 # jq
 
-# OutDir="/nfs/Public/FinishedPictures/"
-OutDir=~/Pictures/
+# OutDir='/nfs/Public/FinishedPictures/'
+OutDir='~/Pictures/'
 email=YourEmail@Domain.ReplaceMe
 
 # FilesCollection=$(find . -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
@@ -75,13 +75,16 @@ for CurrentFile in $FilesCollection ; do
     # Do not remove this. It would be evil to OpenStreetMaps and against their terms of use if you hit them more than once every 1.5 seconds.
     # Consider making it much longer and running overnight if you have a ton of photo's.
     echo Sleeping 2 seconds...
-    sleep 1
+    sleep 2
 
     MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-US,en;q=0.5&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
     echo "lon=$lon&lat=$lat"
     echo "$MapLoc" | jq -r '.address' | fgrep -A 1 '{' | fgrep -A 1 '{' | fgrep -v '{' >> FirstAddressField.txt
     # echo "$MapLoc"
 
+    # https://wiki.openstreetmap.org/wiki/User:Innesw/TagTree
+
+    # Find a good "City"...first ones take priority over later ones
     city=$(echo $MapLoc |  jq -r '.address.city')
 
     if [ "$city" == 'null' ]; then
@@ -92,9 +95,6 @@ for CurrentFile in $FilesCollection ; do
     fi
     if [ "$city" == 'null' ]; then
         city=$(echo $MapLoc |  jq -r '.address.hamlet')
-    fi
-    if [ "$city" == 'null' ]; then
-        city=$(echo $MapLoc |  jq -r '.address.suburb')
     fi
     if [ "$city" == 'null' ]; then
         city=$(echo $MapLoc |  jq -r '.address.locality')
@@ -112,22 +112,40 @@ for CurrentFile in $FilesCollection ; do
         city=$(echo $MapLoc |  jq -r '.address.state')
     fi
 
-    # Find nearest Landmark.
+    # Find a good Landmark...first ones take priority over later ones
     Landmark=$(echo $MapLoc |  jq -r '.address.tourism')
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.historic')
     fi
     if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.accommodation')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.cemetery')
+    fi
+    if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.shop')
     fi
     if [ "$Landmark" == 'null' ]; then
-        Landmark=$(echo $MapLoc |  jq -r '.address.amenity')
+        Landmark=$(echo $MapLoc |  jq -r '.address.natural')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.man_made')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.leisure')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.amenity')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.military')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.government')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.healthcare')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.office')
@@ -139,13 +157,22 @@ for CurrentFile in $FilesCollection ; do
         Landmark=$(echo $MapLoc |  jq -r '.address.place')
     fi
     if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.waterway')
+    fi
+    if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.railway')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.aeroway')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.neighbourhood')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.quarter')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.suburb')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.road')
