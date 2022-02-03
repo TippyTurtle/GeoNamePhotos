@@ -1,7 +1,7 @@
 # GeoNamePhotos
   
   This script should rename (move) all images or vidoe files, recursively, to rename them something similar to:
-  ~/Pictures/2013-12/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg
+  ~/Pictures/2013-12/United States/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg
 
   Before running, I highly recommend running rdfind to remove duplicats. By default it won't remove duplicates, you need rdfind -deleteduplicates true 
   rdfind prioritizes the order the the paths you include, deleting the lowest priority, like rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .
