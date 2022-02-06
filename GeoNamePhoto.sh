@@ -15,7 +15,7 @@
 
 # OutDir='/nfs/Public/FinishedPictures/'
 OutDir='~/Pictures/'
-email=YourEmail@Domain.ReplaceMe
+email='YourEmail@Domain.ReplaceMe'
 
 # FilesCollection=$(find . -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
 FilesCollection=$(find . -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
@@ -30,56 +30,75 @@ NC='\033[0m' # No Color
 BOLD=$(tput bold)
 NORM=$(tput sgr0)
 
+# echo $(date) > FirstAddressField.txt
+echo $(date) > GeoNameCityError.txt
+
 IFS=$'\n'
 for CurrentFile in $FilesCollection ; do
   echo -e "${BOLD}$CurrentFile${NORM}"
   
-  ExifData=$(exiftool -m -j -n $CurrentFile)
+  ExifData=$(exiftool -fast2 -m -j -d '%Y-%m-%d %H:%M:%S' -c '%+1.14g' $CurrentFile)
   # echo $ExifData
 
-  lat=$(echo $ExifData | jq -r '.[0].GPSLatitude')
-  lon=$(echo $ExifData | jq -r '.[0].GPSLongitude')
+  lat=$(echo $ExifData | jq -r '.[0].GPSLatitude' | sed 's/+//')
+  lon=$(echo $ExifData | jq -r '.[0].GPSLongitude' | sed 's/+//')
+  echo "lat=$lat&lon=$lon"
 
-  if [ $(echo $ExifData | jq -r '.[0].Model') != 'null' ]; then
+  CameraModel=$(echo $ExifData | jq -r '.[0].Model')
+  if [ "$CameraModel" != '' ] && [ "$CameraModel" != 'null' ]; then
     CameraModel="($(echo $ExifData | jq -r '.[0].Model'))"
   else
     CameraModel=''
   fi
 
+  # Bad date...zero: '1970-01-01 16:23:53' There is a lot of variation on the hour/minutes/seconds part, I just check year-month-day
+  # FileModifyDate is sometimes is newer than all other dates including ModifyDate
+  # Do not use ProfileDateTime, it is the date a camera profile was set, not when the photo was taken.
+
   CreateDateName='null'
-  if [ $(echo $ExifData | jq -r '.[0].ModifyDate') != 'null' ] && [ $(echo $ExifData | jq -r '.[0].ModifyDate') != '0000:00:00 00:00:00' ]; then
-    CreateDateName='ModifyDate'
-  fi
-  if [ $(echo $ExifData | jq -r '.[0].FileModifyDate') != 'null' ] && [ $(echo $ExifData | jq -r '.[0].FileModifyDate') != '0000:00:00 00:00:00' ]; then
+  PhotoTakeAt=''
+  PhotoTakeAt=$(date)
+  TempString=$(echo $ExifData | jq -r '.[0].FileModifyDate')
+  if [ "$TempString" != 'null' ] && [ "$TempString" != '' ] && [ "$(date -d $TempString +'%Y-%m-%d')" != '1970-01-01' ]; then
     CreateDateName='FileModifyDate'
+    PhotoTakeAt=$(date -d $TempString +'%Y-%m-%d %H:%M:%S')
   fi
-  if [ $(echo $ExifData | jq -r '.[0].ProfileDateTime') != 'null' ] && [ $(echo $ExifData | jq -r '.[0].ProfileDateTime') != '0000:00:00 00:00:00' ]; then
-    CreateDateName='ProfileDateTime'
+  TempString="$(echo $ExifData | jq -r '.[0].ModifyDate')"
+  if [ "$TempString" != 'null' ] && [ "$TempString" != '' ] && [ "$(date -d $TempString +'%Y-%m-%d')" != '1970-01-01' ]; then
+    CreateDateName='ModifyDate'
+    PhotoTakeAt=$(date -d $TempString +'%Y-%m-%d %H:%M:%S')
   fi
-  if [ $(echo $ExifData | jq -r '.[0].CreateDate') != 'null' ] && [ $(echo $ExifData | jq -r '.[0].CreateDate') != '0000:00:00 00:00:00' ]; then
+  TempString="$(echo $ExifData | jq -r '.[0].CreateDate')"
+  if [ "$TempString" != 'null' ] && [ "$TempString" != '' ] && [ "$(date -d $TempString +'%Y-%m-%d')" != '1970-01-01' ]; then
     CreateDateName='CreateDate'
+    PhotoTakeAt=$(date -d $TempString +'%Y-%m-%d %H:%M:%S')
   fi
-  if [ $(echo $ExifData | jq -r '.[0].DateTimeOriginal') != 'null' ] && [ $(echo $ExifData | jq -r '.[0].DateTimeOriginal') != '0000:00:00 00:00:00' ]; then
+  TempString="$(echo $ExifData | jq -r '.[0].DateTimeOriginal')"
+  if [ "$TempString" != 'null' ] && [ "$TempString" != '' ] && [ "$(date -d $TempString +'%Y-%m-%d')" != '1970-01-01' ]; then
     CreateDateName='DateTimeOriginal'
+    PhotoTakeAt=$(date -d $TempString +'%Y-%m-%d %H:%M:%S')
   fi
   if [ "$CreateDateName" == 'null' ]; then
     echo "NO DATA $ExifData"
     echo $(date) " No Date for image $ExifData" >> GeoNameCityError.txt
     exit 666
   fi
+  echo "$CreateDateName"
+  
 
-  if [ -z "$lat" -o "$lat" == 0 -o "$lat" == 'null' ] ; then
+  if [ -z "$lat" -o "$lat" == '+0.00000000000000' -o "$lat" == 'null' ] ; then
     city=''
     Country=''
+    ImageDescription=$(date -d $PhotoTakeAt +'%A %d %B %Y at %I:%M:%S %p')
   else
     # Do not remove this. It would be evil to OpenStreetMaps and against their terms of use if you hit them more than once every 1.5 seconds.
     # Consider making it much longer and running overnight if you have a ton of photo's.
     echo Sleeping 2 seconds...
-    sleep 2
+    sleep 1
 
     MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-US,en;q=0.5&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
-    echo "lon=$lon&lat=$lat"
-    echo "$MapLoc" | jq -r '.address' | fgrep -A 1 '{' | fgrep -A 1 '{' | fgrep -v '{' >> FirstAddressField.txt
+
+    # echo "$MapLoc" | jq -r '.address' | fgrep -A 1 '{' | fgrep -A 1 '{' | fgrep -v '{' >> FirstAddressField.txt
     # echo "$MapLoc"
 
     # https://wiki.openstreetmap.org/wiki/User:Innesw/TagTree
@@ -118,6 +137,12 @@ for CurrentFile in $FilesCollection ; do
         Landmark=$(echo $MapLoc |  jq -r '.address.historic')
     fi
     if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.isolated_dwelling')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.craft')
+    fi
+    if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.accommodation')
     fi
     if [ "$Landmark" == 'null' ]; then
@@ -125,6 +150,9 @@ for CurrentFile in $FilesCollection ; do
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.shop')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.club')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.natural')
@@ -137,6 +165,9 @@ for CurrentFile in $FilesCollection ; do
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.amenity')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.emergency')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.military')
@@ -169,6 +200,12 @@ for CurrentFile in $FilesCollection ; do
         Landmark=$(echo $MapLoc |  jq -r '.address.neighbourhood')
     fi
     if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.city_block')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.city_district')
+    fi
+    if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.quarter')
     fi
     if [ "$Landmark" == 'null' ]; then
@@ -191,24 +228,30 @@ for CurrentFile in $FilesCollection ; do
         fi
     else
         if [ "$Landmark" == 'null' ]; then
-            city="($city)"
+            city="$city"
             echo $(date) " City but no Landmark lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
         else
-            city="($Landmark-$city)"
+            city="$Landmark-$city"
         fi
     fi
 
     if [ $(echo $MapLoc |  jq -r '.address.country')!='null' ]; then
       Country="$(echo $MapLoc |  jq -r '.address.country')/"
+      ImageDescription="$(echo $city | sed 's/-/, /') ($(echo $MapLoc |  jq -r '.address.country')) on $(date -d $PhotoTakeAt +'%A %d %B %Y at %I:%M:%S %p')"
     else
       Country=''
+      ImageDescription="$(echo $city | sed 's/-/, /') on $(date -d $PhotoTakeAt +'%A %d %B %Y at %I:%M:%S %p')"
+      echo $(date) " No Country lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
     fi
+    city="($city)"
+
+    echo "$city X $Country"  
 
   fi
-
+  echo $ImageDescription
   echo ---
-  ExifToolCommand="FileName<$OutDir\${$CreateDateName}$city$CameraModel.%le"
-  exiftool -m -fixBase -v0 -P -d '%Y-%m/'"$Country"'%Y-%m-%d %Hh%Mm%Ss%%-c' '-'"$ExifToolCommand"'' "$CurrentFile"
+  # Add "-o ." to copy insted of move files
+  exiftool -m -fixBase -q -P -ImageDescription=''"$ImageDescription"'' -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$OutDir\${$CreateDateName}$city$CameraModel.%le"'' "$CurrentFile"
   echo ---
 
   (( FileCount=$FileCount+1 ))
