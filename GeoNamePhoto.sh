@@ -94,7 +94,7 @@ for CurrentFile in $FilesCollection ; do
     # Do not remove this. It would be evil to OpenStreetMaps and against their terms of use if you hit them more than once every 1.5 seconds.
     # Consider making it much longer and running overnight if you have a ton of photo's.
     echo Sleeping 2 seconds...
-    sleep 1
+    sleep 2
 
     MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-US,en;q=0.5&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
 
