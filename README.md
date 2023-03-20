@@ -1,6 +1,6 @@
 # GeoNamePhotos
   
-  This script should rename (move) all images or vidoe files, recursively, to rename them something similar to:
+  This script should rename (move) all images or video files, recursively, to rename them something similar to:
   ~/Pictures/2013-12/United States/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg
   
   This scripts gets place names from openstreetmap.org using GPS data in the photo.
@@ -10,7 +10,7 @@
   - curl
   - jq
 
-Before running, I highly recommend running rdfind to remove duplicats. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .`
+Before running, I highly recommend running rdfind to remove duplicates. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .`
 rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
 rdfind looks for duplicates across all file types...not just jpg.
   
@@ -79,5 +79,5 @@ rdfind looks for duplicates across all file types...not just jpg.
 │       ├── 2015-07-07 13.54.57(Ring Road South-Crawley)(D6603).jpg
 │       └── 2015-07-15 09.24.33(London Borough of Camden-London)(D6603).jpg
 ```
-  By grouping by Country, I have found the paths sort of seperate different vacations...and by having the "landmark-city" in the jpg title after the date/time, you can easily see the different stops you made during you trip.
+  By grouping by Country, I have found the paths sort of separate different vacations...and by having the "landmark-city" in the jpg title after the date/time, you can easily see the different stops you made during you trip.
   
