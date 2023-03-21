@@ -20,7 +20,7 @@ rdfind looks for duplicates across all file types...not just jpg.
 ```
   ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<nearest landmark>-<city>)(<camera model>).jpg
 ```
-  **If there are no are geo tags then the Filename output is:**
+  **If there are no geo tags in the exif data then the Filename output is:**
 ```
   ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<camera model>).jpg
 ```
