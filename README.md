@@ -1,16 +1,16 @@
 # GeoNamePhotos
   
-  This script should rename (move) all images or video files, recursively, to rename them something similar to:
+  From where this script is run, it rename (move) all images or video files, recursively, to something similar to:
   ~/Pictures/2013-12/United States/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg
   
-  This scripts gets place names from openstreetmap.org using GPS data in the photo.
+  This scripts gets place names from openstreetmap.org using GPS exif data in the photo or video.
   
   **You need to have the following installed:**
   - exiftool
   - curl
   - jq
 
-Before running, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates. By default rdfind won't remove duplicates, you need `rdfind -deleteduplicates true .` to actully (permenantly) delete dumplicates.
+Before running on a large set of files, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates.  It is a byte-for-byte comparison, so it won't find and remove images that look similar. By default rdfind won't remove duplicates, you need `rdfind -deleteduplicates true .` to actully (permenantly) delete dumplicates.
 
 rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
 
