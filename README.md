@@ -10,9 +10,10 @@
   - curl
   - jq
 
-Before running, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .` to actully (permenantly) delete dumplicates.
+Before running, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates. By default rdfind won't remove duplicates, you need `rdfind -deleteduplicates true .` to actully (permenantly) delete dumplicates.
 
 rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
+
 rdfind looks for duplicates across all file types...not just jpg.
 
   **Filename Output:**
@@ -24,7 +25,7 @@ rdfind looks for duplicates across all file types...not just jpg.
   ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<camera model>).jpg
 ```
 
-  **Full Output:**
+  **Example Full Output:**
 ```
 ~/Pictures/
 ├── 2015-07
@@ -82,5 +83,6 @@ rdfind looks for duplicates across all file types...not just jpg.
 │       ├── 2015-07-07 13.54.57(Ring Road South-Crawley)(D6603).jpg
 │       └── 2015-07-15 09.24.33(London Borough of Camden-London)(D6603).jpg
 ```
-  By grouping by Country, I have found the paths sort of separate different vacations...and by having the "landmark-city" in the jpg title after the date/time, you can easily see the different stops you made during you trip.
+
+By grouping by Country, I have found the paths sort of separate different vacations...and by having the "landmark-city" in the jpg title after the date/time, you can easily see the different stops you made during you trip.
   
