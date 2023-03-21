@@ -10,7 +10,7 @@
   - curl
   - jq
 
-Before running, I highly recommend running rdfind to remove duplicates. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .`
+Before running, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .`
 rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
 rdfind looks for duplicates across all file types...not just jpg.
 
@@ -18,7 +18,7 @@ rdfind looks for duplicates across all file types...not just jpg.
 ```
   ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<nearest landmark>-<city>)(<camera model>).jpg
 ```
-  **If there no are geo tags then the Filename output is:**
+  **If there are no are geo tags then the Filename output is:**
 ```
   ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<camera model>).jpg
 ```
