@@ -13,16 +13,15 @@
 Before running, I highly recommend running rdfind to remove duplicates. By default it won't remove duplicates, you need `rdfind -deleteduplicates true .`
 rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
 rdfind looks for duplicates across all file types...not just jpg.
-  
-  **Output is:**
-```
-  ~/Pictures/
-  photo creation \<year\>\<month\>
-  ...if there are geo tags...
-  /\<country\>/
-  ...with a file name of...
-  photo creation \<year\>-\<month\>-\<day\> \<hour\>h-\<minute\>m-\<second\>s(\<landmark\>-\<city\>)(\<camera model\>).jpg
 
+  **Output:**
+```
+  ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<nearest landmark>-<city>)(<camera model>).jpg
+```
+  **If there no are geo tags then the Filename output is:**
+```
+  ~/Pictures/<year>-<month>/<year>-<month>-<day> <hour>h-<minute>m-<second>s(<camera model>).jpg
+```
 ~/Pictures/
 ├── 2015-07
 │   ├── 2015-07-02 06.16.03(D6603).jpg
