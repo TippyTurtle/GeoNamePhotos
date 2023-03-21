@@ -12,7 +12,7 @@
 
 Before running on a large set of files, I highly recommend running <A hRef="https://rdfind.pauldreik.se/" target="_blank">rdfind</A> to remove duplicates.  It is a byte-for-byte comparison, so it won't find and remove images that look similar. By default rdfind won't remove duplicates, you need `rdfind -deleteduplicates true .` to actully (permenantly) delete dumplicates.
 
-rdfind prioritizes the order the the paths you include, deleting the lowest priority, like `rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .`
+rdfind prioritizes the order of the paths you include, deleting the lowest priority duplicates, like `rdfind -deleteduplicates true /Most/Important/Path/ /Less/Important/ /VeryLeastImportant/ .`
 
 rdfind looks for duplicates across all file types...not just jpg.
 
