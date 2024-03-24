@@ -277,5 +277,5 @@ for CurrentFile in $FilesCollection ; do
 done
 
 # Delete now empty folders
-find . -type d -empty -delete
+find . -type d -empty -delete -print
 date
