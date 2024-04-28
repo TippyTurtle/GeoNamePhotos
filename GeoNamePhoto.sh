@@ -8,21 +8,8 @@
 # rdfind prioritizes the order the the paths you include, deleting the lowest priority, like rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .
 # rdfind looks for duplicates across all file types...not just jpg.
 
-# You need to have the following installed:
-# exiftool
-# curl
-# jq
 
-# OutDir='/nfs/Public/FinishedPictures/'
-OutDir='~/Pictures/'
-email='YourEmail@Domain.ReplaceMe'
-
-# FilesCollection=$(find . -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
-FilesCollection=$(find . -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
-
-FileTotal=$(echo "$FilesCollection" | wc -l)
-FileCount=0
-StartTime=$(date +%s)
+email='tduffin@gmail.com'
 
 # Text Colors
 RED='\033[0;31m'
@@ -31,6 +18,82 @@ NC='\033[0m' # No Color
 BOLD=$(tput bold)
 NORM=$(tput sgr0)
 
+# Initialize IsError variable
+IsError=0
+
+# You need to have the following installed:
+# exiftool curl jq
+
+# Check if exiftool is installed
+if ! command -v exiftool &> /dev/null; then
+    echo "exiftool is not installed. On Debian, run:"
+    echo "sudo apt install libimage-exiftool-perl"
+    IsError=1
+fi
+
+# Check if curl is installed 
+if ! command -v curl &> /dev/null; then
+    echo "curl is not installed. On Debian, run:"
+    echo "sudo apt install curl"
+    IsError=1
+fi
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq is not installed. On Debian, run:"
+    echo "sudo apt install jq"
+    IsError=1
+fi
+
+# Check if both arguments are present
+if [ "$#" -ne 2 ]; then
+    echo "Usage: GeoNamePhoto.sh /source/directory/ /output/directory/"
+    IsError=1
+fi
+
+# Assign the arguments to variables
+DirectoryIn="$1"
+DirectoryOut="$2"
+
+# Check if directories exist
+if [ ! -d "$DirectoryIn" ]; then
+    echo "Error: $DirectoryIn does not exist."
+    IsError=1
+fi
+if [ ! -d "$DirectoryOut" ]; then
+    echo "Error: $DirectoryOut does not exist."
+    IsError=1
+fi
+
+# Exit with non-zero status code if any tool is missing
+if [ "$IsError" -eq 1 ]; then
+    exit 1
+fi
+
+echo "Photo's [p], Movie's [m] or Both [b]?"
+read -n1 choice
+
+case $choice in
+  p)
+    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
+    ;;
+  m)
+    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
+    ;;
+  b)
+    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
+    ;;
+  *)
+    echo "Invalid choice"
+    exit 1
+esac
+
+FileTotal=$(echo "$FilesCollection" | wc -l)
+FileCount=0
+StartTime=$(date +%s)
+
+echo "File count: $FileTotal"
+
 #Use this log to find $Landmark fields that should have been used. You will need to process the list more with a "Group-By" tool to be more efficient.
 echo $(date) > FirstAddressField.txt
 
@@ -38,6 +101,7 @@ echo $(date) > FirstAddressField.txt
 echo $(date) > GeoNameCityError.txt
 
 IFS=$'\n'
+
 for CurrentFile in $FilesCollection ; do
   echo -e "--------------------${BOLD}$CurrentFile${NORM}--------------------"
   
@@ -49,6 +113,7 @@ for CurrentFile in $FilesCollection ; do
   # echo "lat=$lat&lon=$lon"
 
   #Camera Model has be surprisingly useful to know who took the photo, particularly to know when you didn't, but were given a dump from someone else.
+  CameraModel=''
   CameraModel=$(echo $ExifData | jq -r '.[0].Model')
   if [ "$CameraModel" != '' ] && [ "$CameraModel" != 'null' ]; then
     CameraModel="($(echo $ExifData | jq -r '.[0].Model'))"
@@ -56,7 +121,7 @@ for CurrentFile in $FilesCollection ; do
     CameraModel=''
     echo $(date) " No Camera $(echo $ExifData | sed 's/\n/-/g')" >> GeoNameCityError.txt
   fi
-
+  
   # Bad date...zero: '1970-01-01 16:23:53' There is a lot of variation on the hour/minutes/seconds part, I just check year-month-day
   # FileModifyDate is sometimes is newer than all other dates including ModifyDate
   # Do not use ProfileDateTime, it is the date a camera profile was set, not when the photo was taken.
@@ -99,12 +164,12 @@ for CurrentFile in $FilesCollection ; do
 
     # Do not remove this. It would be evil to OpenStreetMaps and against their terms of use if you hit them more than once every 1.5 seconds.
     # Consider making it much longer and running overnight if you have a ton of photo's.
-    echo Sleeping 2 seconds...
-    sleep 2
+    echo Sleeping 3 seconds...
+    sleep 3
 
     MapLoc=$(curl -s --retry 10 "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&email=$email&accept-language=en-US,en;q=0.5&lat=$lat&lon=$lon&zoom=19&addressdetails=1")
 
-    echo "$MapLoc" | jq -r '.address' | fgrep -A 1 '{' | fgrep -A 1 '{' | fgrep -v '{' >> FirstAddressField.txt
+    # echo "$MapLoc" | jq -r '.address' | fgrep -A 1 '{' | fgrep -A 1 '{' | fgrep -v '{' >> FirstAddressField.txt
     # echo "$MapLoc"
 
     # https://wiki.openstreetmap.org/wiki/User:Innesw/TagTree
@@ -136,7 +201,6 @@ for CurrentFile in $FilesCollection ; do
     if [ "$city" == 'null' ]; then
         city=$(echo $MapLoc |  jq -r '.address.state')
     fi
-
     # Find a good Landmark...first ones take priority over later ones
     # Ignoring: aerialway, craft
     Landmark=$(echo $MapLoc |  jq -r '.address.tourism')
@@ -169,6 +233,9 @@ for CurrentFile in $FilesCollection ; do
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.amenity')
+    fi
+    if [ "$Landmark" == 'null' ]; then
+        Landmark=$(echo $MapLoc |  jq -r '.address.display_name')
     fi
     if [ "$Landmark" == 'null' ]; then
         Landmark=$(echo $MapLoc |  jq -r '.address.emergency')
@@ -251,9 +318,8 @@ for CurrentFile in $FilesCollection ; do
       echo $(date) " No Country lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
     fi
     city="($city)"
-
   fi
-  # replace bad filename characters: \ / : " *   didn't   ? < > | % # $ & { } [ ]
+# replace bad filename characters: \ / : " *   didn't   ? < > | % # $ & { } [ ]
   Country="$(echo $Country | sed 's/\//-/g;s/\\/-/g;s/\:/./g;s/\"//g;s/\*//g')/"
   city=$(echo $city | sed 's/\//-/g;s/\\/-/g;s/\:/./g;s/\"//g;s/\*//g')
   CameraModel=$(echo $CameraModel | sed 's/\//-/g;s/\\/-/g;s/\:/./g;s/\"//g;s/\*//g')
@@ -261,7 +327,7 @@ for CurrentFile in $FilesCollection ; do
   echo -e "-------------------------------${BOLD}$ImageDescription${NORM}-------------------------------"
   # "-o ." to copy insted of move
   # Change -FileName to -TestName for a dry run with moving/copying files.
-  exiftool -m -fixBase -q -P -ImageDescription=''"$ImageDescription"'' -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$OutDir\${$CreateDateName}$city$CameraModel.%le"'' ''"$CurrentFile"''
+  exiftool -m -fixBase -q -P -ImageDescription=''"$ImageDescription"'' -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$DirectoryOut\${$CreateDateName}$city$CameraModel.%le"'' ''"$CurrentFile"''
 
   # Someone can do a better job at this, I can't deal with float in bash to save my life
   (( FileCount=$FileCount+1 ))
@@ -277,5 +343,5 @@ for CurrentFile in $FilesCollection ; do
 done
 
 # Delete now empty folders
-find . -type d -empty -delete -print
+find $DirectoryIn -type d -empty -delete -print
 date
