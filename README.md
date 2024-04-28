@@ -1,9 +1,13 @@
 # GeoNamePhotos
+  Usage: ```GeoNamePhoto.sh /source/directory/ /output/directory/```
   
-  From where this script is run, it rename (move) all images or video files, recursively, to something similar to:
-  ~/Pictures/2013-12/United States/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg
+  Example: ```GeoNamePhoto.sh . ~/Pictures/```
   
-  This scripts gets place names from openstreetmap.org using GPS exif data in the photo or video.
+  This script will rename (move) all images or video files, recursively, to something similar to:
+  
+  ```~/Pictures/2013-12/United States/2013-12-17 13h27m02s(Silverwood Theme Park-Athol)(p500).jpg```
+  
+  This scripts gets place names from openstreetmap.org using GPS exif data in the photo or video if avaliable.
   
   **You need to have the following installed:**
   - exiftool
