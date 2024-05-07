@@ -9,7 +9,7 @@
 # rdfind looks for duplicates across all file types...not just jpg.
 
 
-email='tduffin@gmail.com'
+email='You@YourPlace.HOUSE'
 
 # Text Colors
 RED='\033[0;31m'
@@ -46,47 +46,53 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Check if both arguments are present
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 ]; then
     echo "Usage: GeoNamePhoto.sh /source/directory/ /output/directory/"
     IsError=1
 fi
 
 # Assign the arguments to variables
-DirectoryIn="$1"
-DirectoryOut="$2"
+InDir="$1"
+OutDir="$2"
+FileTypes="$3"
+GeoNamePhotoErrors=$InDir\GeoNameCityError.txt
 
 # Check if directories exist
-if [ ! -d "$DirectoryIn" ]; then
-    echo "Error: $DirectoryIn does not exist."
+if [ ! -d "$InDir" ]; then
+    echo "Error: $InDir does not exist."
     IsError=1
 fi
-if [ ! -d "$DirectoryOut" ]; then
-    echo "Error: $DirectoryOut does not exist."
+if [ ! -d "$OutDir" ]; then
+    echo "Error: $OutDir does not exist."
     IsError=1
 fi
+
+if [ -z "$FileTypes" ]; then
+  echo "Photo's [p], Movie's [m] or Both [b]?"
+  read -n1 choice
+  echo
+fi
+
+case $FileTypes in
+  p)
+    FilesCollection=$(find $InDir -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.cr2' \))
+    ;;
+  m)
+    FilesCollection=$(find $InDir -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
+    ;;
+  b)
+    FilesCollection=$(find $InDir -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.cr2' \))
+    ;;
+  *)
+    echo "Invalid choice for file types."
+    IsError=1
+esac
 
 # Exit with non-zero status code if any tool is missing
 if [ "$IsError" -eq 1 ]; then
     exit 1
 fi
 
-echo "Photo's [p], Movie's [m] or Both [b]?"
-read -n1 choice
-
-case $choice in
-  p)
-    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
-    ;;
-  m)
-    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' \))
-    ;;
-  b)
-    FilesCollection=$(find $DirectoryIn -type f \( -iname '*.mpg' -o -iname '*.mpeg' -o -iname '*.mov' -o -iname '*.mp4' -o -iname '*.wmv' -o -iname '*.avi' -o -iname '*.3gp' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.cr2' \))
-    ;;
-  *)
-    echo "Invalid choice"
-    exit 1
-esac
 
 FileTotal=$(echo "$FilesCollection" | wc -l)
 FileCount=0
@@ -98,7 +104,7 @@ echo "File count: $FileTotal"
 echo $(date) > FirstAddressField.txt
 
 #Most are false-positives, some sometimes you will find a legitmate field that should be used for or $city that was missed.
-echo $(date) > GeoNameCityError.txt
+echo $(date) > "$GeoNamePhotoErrors"
 
 IFS=$'\n'
 
@@ -119,7 +125,7 @@ for CurrentFile in $FilesCollection ; do
     CameraModel="($(echo $ExifData | jq -r '.[0].Model'))"
   else
     CameraModel=''
-    echo $(date) " No Camera $(echo $ExifData | sed 's/\n/-/g')" >> GeoNameCityError.txt
+    echo $(date) " No Camera $(echo $ExifData | sed 's/\n/-/g')" >> "$GeoNamePhotoErrors"
   fi
   
   # Bad date...zero: '1970-01-01 16:23:53' There is a lot of variation on the hour/minutes/seconds part, I just check year-month-day
@@ -152,7 +158,7 @@ for CurrentFile in $FilesCollection ; do
   fi
   if [ "$CreateDateName" == 'null' ]; then
     echo "NO DATA $ExifData"
-    echo $(date) " No Date for image $(echo $ExifData | sed 's/\n/-/g')" >> GeoNameCityError.txt
+    echo $(date) " No Date for image $(echo $ExifData | sed 's/\n/-/g')" >> "$GeoNamePhotoErrors"
     exit 666
   fi
 
@@ -296,14 +302,14 @@ for CurrentFile in $FilesCollection ; do
     if [ "$city" == 'null' ]; then
         if [ "$Landmark" == 'null' ]; then
             city=''
-            echo $(date) " No City or Landmark lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
+            echo $(date) " No City or Landmark $CurrentFile lat=$lat&lon=$lon $MapLoc" >> "$GeoNamePhotoErrors"
         else
             city="$Landmark"
         fi
     else
         if [ "$Landmark" == 'null' ]; then
             city="$city"
-            echo $(date) " City but no Landmark lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
+            echo $(date) " City but no Landmark $CurrentFile lat=$lat&lon=$lon $MapLoc" >> "$GeoNamePhotoErrors"
         else
             city="$Landmark-$city"
         fi
@@ -315,7 +321,7 @@ for CurrentFile in $FilesCollection ; do
     else
       Country=''
       ImageDescription="$(echo $city | sed 's/-/, /') on $(date -d $PhotoTakeAt +'%A %d %B %Y at %I:%M:%S %p')"
-      echo $(date) " No Country lat=$lat&lon=$lon $MapLoc" >> GeoNameCityError.txt
+      echo $(date) " No Country lat=$lat&lon=$lon $MapLoc" >> "$GeoNamePhotoErrors"
     fi
     city="($city)"
   fi
@@ -325,23 +331,26 @@ for CurrentFile in $FilesCollection ; do
   CameraModel=$(echo $CameraModel | sed 's/\//-/g;s/\\/-/g;s/\:/./g;s/\"//g;s/\*//g')
 
   echo -e "-------------------------------${BOLD}$ImageDescription${NORM}-------------------------------"
-  # "-o ." to copy insted of move
+  # Add "-o ." to copy instead of move the files.  
   # Change -FileName to -TestName for a dry run with moving/copying files.
-  exiftool -m -fixBase -q -P -ImageDescription=''"$ImageDescription"'' -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$DirectoryOut\${$CreateDateName}$city$CameraModel.%le"'' ''"$CurrentFile"''
+  # exiftool -m -fixBase -q -P -ImageDescription=''"$ImageDescription"'' -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$OutDir\${$CreateDateName}$city$CameraModel.%le"'' ''"$CurrentFile"''
+  exiftool -m -fixBase -q -P -d '%Y-%m/'"$Country%"'Y-%m-%d %H.%M.%S%%-c' '-FileName<'"$OutDir\${$CreateDateName}$city$CameraModel.%le"'' ''"$CurrentFile"''
 
-  # Someone can do a better job at this, I can't deal with float in bash to save my life
+    # Someone can do a better job at this, I can't deal with float in bash to save my life
   (( FileCount=$FileCount+1 ))
   PercentDone=$(echo "scale=4; $FileCount*100/$FileTotal" | bc -l )
   RunTime=$( echo "$(date +%s) - $StartTime" | bc -l )
   SecondsLeft=$( echo "($RunTime/($PercentDone/100))-$RunTime;scale=0" | bc -l )
+  (( SecondsLeft=$SecondsLeft+1 ))
   SecondsLeft=${SecondsLeft%.*}
+  
   echo 
-  echo "$FileCount of $FileTotal. $PercentDone% complete."
-  echo "Running for $RunTime seconds or $(( $RunTime / 60 )) minutes or $(( $RunTime / 60 / 60 )) hours."
-  echo -e "${BLUE}$SecondsLeft seconds or $(( $SecondsLeft / 60 )) minutes or $(( $SecondsLeft / 60 / 60 )) hours left.${NC}"
+  echo "$FileCount of $FileTotal. $(printf "%.2f" "$PercentDone")% complete."
+  printf "Running for %02d:%02d:%02d.\n" $(($RunTime/3600)) $(($RunTime%3600/60)) $(($RunTime%60))
+  printf "${BLUE}Only %02d:%02d:%02d left to go.${NC}\n" $(($SecondsLeft/3600)) $(($SecondsLeft%3600/60)) $(($SecondsLeft%60))
   echo 
 done
 
 # Delete now empty folders
-find $DirectoryIn -type d -empty -delete -print
+find $InDir -type d -empty -delete -print
 date
