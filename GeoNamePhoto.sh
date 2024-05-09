@@ -8,7 +8,6 @@
 # rdfind prioritizes the order the the paths you include, deleting the lowest priority, like rdfind -deleteduplicates true /Most/Important/Path /Less/Important /Least .
 # rdfind looks for duplicates across all file types...not just jpg.
 
-
 email='You@YourPlace.HOUSE'
 
 # Text Colors
@@ -341,8 +340,8 @@ for CurrentFile in $FilesCollection ; do
   PercentDone=$(echo "scale=4; $FileCount*100/$FileTotal" | bc -l )
   RunTime=$( echo "$(date +%s) - $StartTime" | bc -l )
   SecondsLeft=$( echo "($RunTime/($PercentDone/100))-$RunTime;scale=0" | bc -l )
-  (( SecondsLeft=$SecondsLeft+1 ))
   SecondsLeft=${SecondsLeft%.*}
+  (( SecondsLeft=$SecondsLeft+1 ))
   
   echo 
   echo "$FileCount of $FileTotal. $(printf "%.2f" "$PercentDone")% complete."
