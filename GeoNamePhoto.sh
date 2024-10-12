@@ -68,7 +68,7 @@ fi
 
 if [ -z "$FileTypes" ]; then
   echo "Photo's [p], Movie's [m] or Both [b]?"
-  read -n1 choice
+  read -n1 FileTypes
   echo
 fi
 
